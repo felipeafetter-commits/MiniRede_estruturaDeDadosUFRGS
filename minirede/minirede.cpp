@@ -4,17 +4,19 @@
 
 using namespace std;
 
-//funcoes de fila de notificacoes
-void addNotificacoes(Fila& notificacoes, int tipo, int idUser, int idPost){
+// funcoes de fila de notificacoes
+void addNotificacoes(Fila &notificacoes, int tipo, int idUser, int idPost)
+{
     NoNotificacao *novo = new NoNotificacao{idPost, idUser, nullptr, tipo};
-    
-    if(notificacoes.fim!= nullptr){
+
+    if (notificacoes.fim != nullptr)
+    {
         notificacoes.fim->prox = novo;
     }
     else
         notificacoes.inicio = novo;
 
-    notificacoes.fim= novo;
+    notificacoes.fim = novo;
 }
 // chave
 int funcaoHash(const char username[], int tamanhoTabela)
@@ -70,7 +72,7 @@ void inicializarMiniRede(MiniRede &rede)
     rede.raizArvorePosts = nullptr;
 }
 
-// funcoes de arvore aqui:
+// funcoes de arvore de usuários aqui:
 
 NoArvore *rotDir(NoArvore *y)
 {
@@ -278,6 +280,203 @@ usuario *buscarArvore(NoArvore *no, int idBuscado)
     return buscarArvore(no->dir, idBuscado);
 }
 
+// Funções de publicação a partir daqui: -------------------------------------------------------------------------
+
+NoArvorePosts *rotDir(NoArvorePosts *y)
+{
+    if (y == nullptr || y->esq == nullptr)
+        return y;
+
+    NoArvorePosts *u = y->esq;
+    y->esq = u->dir;
+    u->dir = y;
+    y->FB = 0;
+    u->FB = 0;
+    return u;
+}
+
+NoArvorePosts *rotEsq(NoArvorePosts *y)
+{
+    if (y == nullptr || y->dir == nullptr)
+        return y;
+
+    NoArvorePosts *u = y->dir;
+    y->dir = u->esq;
+    u->esq = y;
+    y->FB = 0;
+    u->FB = 0;
+    return u;
+}
+
+NoArvorePosts *rotEsqDir(NoArvorePosts *a)
+{
+    if (a == nullptr || a->esq == nullptr || a->esq->dir == nullptr)
+        return a;
+
+    NoArvorePosts *filho = a->esq;
+    NoArvorePosts *neto = filho->dir;
+    int FBNeto = neto->FB;
+
+    a->esq = rotEsq(a->esq);
+    NoArvorePosts *novaRaiz = rotDir(a);
+
+    if (FBNeto == -1)
+    {
+        a->FB = 1;
+        filho->FB = 0;
+    }
+    else if (FBNeto == 1)
+    {
+        a->FB = 0;
+        filho->FB = -1;
+    }
+    else
+    {
+        a->FB = 0;
+        filho->FB = 0;
+    }
+    novaRaiz->FB = 0;
+
+    return novaRaiz;
+}
+
+NoArvorePosts *rotDirEsq(NoArvorePosts *a)
+{
+    if (a == nullptr || a->dir == nullptr || a->dir->esq == nullptr)
+        return a;
+    NoArvorePosts *filho = a->dir;
+    NoArvorePosts *neto = filho->esq;
+    int FBNeto = neto->FB;
+
+    a->dir = rotDir(a->dir);
+    NoArvorePosts *novaRaiz = rotEsq(a);
+
+    if (FBNeto == -1)
+    {
+        a->FB = 1;
+        filho->FB = 0;
+    }
+    else if (FBNeto == 1)
+    {
+        a->FB = 0;
+        filho->FB = -1;
+    }
+    else
+    {
+        a->FB = 0;
+        filho->FB = 0;
+    }
+    novaRaiz->FB = 0;
+
+    return novaRaiz;
+}
+// verifica rotacao
+NoArvorePosts *casoEsquerda(NoArvorePosts *a, bool &aumentouAltura)
+{
+    if (a == nullptr || a->esq == nullptr)
+    {
+        aumentouAltura = false;
+        return a;
+    }
+    NoArvorePosts *z = a->esq;
+
+    if (z->FB == 1)
+    {
+        a = rotDir(a);
+    }
+    else
+    {
+        a = rotEsqDir(a);
+    }
+    a->FB = 0;
+    aumentouAltura = false;
+    return a;
+}
+
+NoArvorePosts *casoDireita(NoArvorePosts *a, bool &aumentouAltura)
+{
+    if (a == nullptr || a->dir == nullptr)
+    {
+        aumentouAltura = false;
+        return a;
+    }
+    NoArvorePosts *z = a->dir;
+
+    if (z->FB == -1)
+    {
+        a = rotEsq(a);
+    }
+    else
+    {
+        a = rotDirEsq(a);
+    }
+    a->FB = 0;
+    aumentouAltura = false;
+    return a;
+}
+
+NoArvorePosts *insereAVL(NoArvorePosts *a, Publicacao *novaPublicacao, bool &aumentouAltura)
+{
+    if (a == nullptr)
+    {
+        NoArvorePosts *novo = new NoArvorePosts;
+        novo->publicacao = novaPublicacao;
+        novo->FB = 0;
+        novo->esq = nullptr;
+        novo->dir = nullptr;
+        aumentouAltura = true;
+        return novo;
+    }
+    if (novaPublicacao->id < a->publicacao->id)
+    {
+        a->esq = insereAVL(a->esq, novaPublicacao, aumentouAltura);
+
+        if (aumentouAltura)
+        {
+            switch (a->FB)
+            {
+            case -1:
+                a->FB = 0;
+                aumentouAltura = false;
+                break;
+            case 0:
+                a->FB = 1;
+                break;
+            case 1:
+                a = casoEsquerda(a, aumentouAltura);
+                break;
+            }
+        }
+    }
+
+    else if (novaPublicacao->id > a->publicacao->id)
+    {
+        a->dir = insereAVL(a->dir, novaPublicacao, aumentouAltura);
+
+        if (aumentouAltura)
+        {
+            switch (a->FB)
+            {
+            case 1:
+                a->FB = 0;
+                aumentouAltura = false;
+                break;
+            case 0:
+                a->FB = -1;
+                break;
+            case -1:
+                a = casoDireita(a, aumentouAltura);
+                break;
+            }
+        }
+    }
+    else
+    {
+        aumentouAltura = false;
+    }
+    return a;
+}
+
 Publicacao *buscarArvorePost(NoArvorePosts *no, int idPost)
 {
     if (no == nullptr)
@@ -288,6 +487,8 @@ Publicacao *buscarArvorePost(NoArvorePosts *no, int idPost)
         return buscarArvorePost(no->esq, idPost);
     return buscarArvorePost(no->dir, idPost);
 }
+
+// Funções de arvore de publicação encerram aqui ---------------------------------------------------------------------
 
 // em ordem
 void imprimeEmOrdem(NoArvore *No, ostream &saida)
@@ -384,7 +585,7 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             entrada >> id;
             listarSeguindo(rede, id, saida);
         }
-        else if(comando == "GET_NOTIFICATIONS")
+        else if (comando == "GET_NOTIFICATIONS")
         {
             int id;
             int k;
@@ -422,8 +623,8 @@ void cadastrarUsuario(MiniRede &rede, int id, const char username[], const char 
     // lista de seguindo
     novoUsuario->seguindo = nullptr;
     novoUsuario->notificacoes = new Fila;
-    novoUsuario->notificacoes->inicio= nullptr;
-    novoUsuario->notificacoes->fim= nullptr;
+    novoUsuario->notificacoes->inicio = nullptr;
+    novoUsuario->notificacoes->fim = nullptr;
 
     // hash para username
     inserirHash(rede.tabelaHash, TAM_HASH, novoUsuario);
@@ -519,16 +720,33 @@ void listarSeguindo(MiniRede &rede, int idUsuario, std::ostream &saida)
 
 void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp, const char texto[], std::ostream &saida)
 {
-    if (buscarArvore(rede.raizArvore, idAutor))
+    usuario *auxUser = buscarArvore(rede.raizArvore, idAutor);
+
+    if (auxUser)
     {
+
         if (buscarArvorePost(rede.raizArvorePosts, idPost))
         {
-            saida << "ERROR POST_EXISTS";
+            saida << "ERROR POST_EXISTS\n";
             return;
         }
         else
         {
-            // adicionar na arvore de posts
+            // Instanciação e preenchimento da publicação
+            int curtidas = 0;
+            Publicacao *publicacao = new Publicacao;
+
+            publicacao->id = idPost;
+            publicacao->idAutor = idAutor;
+            publicacao->timestamp = timestamp;
+            strncpy(publicacao->texto, texto, TAM_TEXTO - 1);
+            publicacao->texto[TAM_TEXTO - 1] = '\0';
+            publicacao->curtidas = curtidas;
+            publicacao->usersLike = nullptr;
+
+            // add na arvore de publicaçao
+
+            // add na lista do usuário
         }
     }
     else
@@ -546,29 +764,33 @@ void curtirPublicacao(MiniRede &rede, int idUsuario, int idPost, std::ostream &s
 void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
 {
     usuario *user = buscarArvore(rede.raizArvore, idUsuario);
-    if(user == nullptr){
+    if (user == nullptr)
+    {
         saida << "ERROR USER_NOT_FOUND\n";
         return;
     }
     saida << "NOTIFICATIONS_BEGIN\n";
-    
-    while(k > 0 && user->notificacoes->inicio != nullptr){
-       //dequeue
-        NoNotificacao* temp = user->notificacoes->inicio;
-        
-        if(temp->tipo == 1){
+
+    while (k > 0 && user->notificacoes->inicio != nullptr)
+    {
+        // dequeue
+        NoNotificacao *temp = user->notificacoes->inicio;
+
+        if (temp->tipo == 1)
+        {
             saida << "NOTIFICATION FOLLOW " << temp->idUser << "\n";
         }
-        else if(temp->tipo== 2){
+        else if (temp->tipo == 2)
+        {
             saida << "NOTIFICATION LIKE " << temp->idUser << " " << temp->idPost << "\n";
         }
 
-        user->notificacoes->inicio= user->notificacoes->inicio->prox;
+        user->notificacoes->inicio = user->notificacoes->inicio->prox;
         delete temp;
         k--;
     }
-    if(user->notificacoes->inicio== nullptr)
-        user->notificacoes->fim= nullptr;
+    if (user->notificacoes->inicio == nullptr)
+        user->notificacoes->fim = nullptr;
 
     saida << "NOTIFICATIONS_END\n";
 }
