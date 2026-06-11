@@ -19,6 +19,20 @@ struct noListPosts;
 struct NoArvore;
 struct NoArvorePosts;
 struct MiniRede;
+struct Fila;
+struct NoNotificacao;
+
+struct Fila{
+    NoNotificacao *inicio;
+    NoNotificacao *fim;
+};
+
+struct NoNotificacao{
+    int idPost;
+    int idUser;
+    NoNotificacao *prox;
+    int tipo;  // 1: seguir  2: like 
+};
 
 struct Publicacao
 {
@@ -37,6 +51,7 @@ struct usuario
     char nome[TAM_NOME];
     NoLista *seguindo;
     noListPosts *publicacoes;
+    Fila *notificacoes;
 };
 
 struct NoLista
@@ -130,5 +145,6 @@ NoArvore *insereAVL(NoArvore *a, usuario *novoUsuario, bool &aumentouAltura);
 usuario *buscarArvore(NoArvore *no, int idBuscado);
 void imprimeEmOrdem(NoArvore *No, std::ostream &saida);
 bool insereLista(NoLista *&inicio, usuario *n);
+void addNotificacoes(Fila& notificacoes, string mensagem);
 
 #endif

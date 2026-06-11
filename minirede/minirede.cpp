@@ -4,6 +4,18 @@
 
 using namespace std;
 
+//funcoes de fila de notificacoes
+void addNotificacoes(Fila& notificacoes, int tipo, int idUser, int idPost){
+    NoNotificacao *novo = new NoNotificacao{idPost, idUser, nullptr, tipo};
+    
+    if(notificacoes.fim!= nullptr){
+        notificacoes.fim->prox = novo;
+    }
+    else
+        notificacoes.inicio = novo;
+
+    notificacoes.fim= novo;
+}
 // chave
 int funcaoHash(const char username[], int tamanhoTabela)
 {
@@ -372,6 +384,13 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             entrada >> id;
             listarSeguindo(rede, id, saida);
         }
+        else if(comando == "GET_NOTIFICATIONS")
+        {
+            int id;
+            int k;
+            entrada >> id >> k;
+            consultarNotificacoes(rede, id, k, saida);
+        }
     }
 }
 
@@ -402,6 +421,9 @@ void cadastrarUsuario(MiniRede &rede, int id, const char username[], const char 
 
     // lista de seguindo
     novoUsuario->seguindo = nullptr;
+    novoUsuario->notificacoes = new Fila;
+    novoUsuario->notificacoes->inicio= nullptr;
+    novoUsuario->notificacoes->fim= nullptr;
 
     // hash para username
     inserirHash(rede.tabelaHash, TAM_HASH, novoUsuario);
@@ -467,6 +489,8 @@ void seguirUsuario(MiniRede &rede, int idSeguidor, int idSeguido, std::ostream &
     if (existem)
     {
         saida << "FOLLOWED\n";
+        string mensagem = "NOTIFICATION FOLLOW " + to_string(a->id);
+        addNotificacoes(*(b->notificacoes), 1, a->id, -1);
     }
     else
     {
@@ -521,7 +545,32 @@ void curtirPublicacao(MiniRede &rede, int idUsuario, int idPost, std::ostream &s
 
 void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
 {
-    // TODO
+    usuario *user = buscarArvore(rede.raizArvore, idUsuario);
+    if(user == nullptr){
+        saida << "ERROR USER_NOT_FOUND\n";
+        return;
+    }
+    saida << "NOTIFICATIONS_BEGIN\n";
+    
+    while(k > 0 && user->notificacoes->inicio != nullptr){
+       //dequeue
+        NoNotificacao* temp = user->notificacoes->inicio;
+        
+        if(temp->tipo == 1){
+            saida << "NOTIFICATION FOLLOW " << temp->idUser << "\n";
+        }
+        else if(temp->tipo== 2){
+            saida << "NOTIFICATION LIKE " << temp->idUser << " " << temp->idPost << "\n";
+        }
+
+        user->notificacoes->inicio= user->notificacoes->inicio->prox;
+        delete temp;
+        k--;
+    }
+    if(user->notificacoes->inicio== nullptr)
+        user->notificacoes->fim= nullptr;
+
+    saida << "NOTIFICATIONS_END\n";
 }
 
 void gerarFeed(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
