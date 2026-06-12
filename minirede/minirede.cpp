@@ -603,6 +603,14 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             entrada >> idPost >> idAutor >> timestamp >> texto;
             cadastrarPublicacao(rede, idPost, idAutor, timestamp, texto.c_str(), saida);
         }
+        
+        else if(comando == "LIKE")
+        {
+            int userId;
+            int postId;
+            entrada >> userId >> postId;
+            curtirPublicacao(rede, userId, postId, saida); 
+        }
     }
 }
 
@@ -702,7 +710,6 @@ void seguirUsuario(MiniRede &rede, int idSeguidor, int idSeguido, std::ostream &
     if (existem)
     {
         saida << "FOLLOWED\n";
-        string mensagem = "NOTIFICATION FOLLOW " + to_string(a->id);
         addNotificacoes(*(b->notificacoes), 1, a->id, -1);
     }
     else
@@ -794,7 +801,34 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
 
 void curtirPublicacao(MiniRede &rede, int idUsuario, int idPost, std::ostream &saida)
 {
-    // TODO
+    usuario *user = buscarArvore(rede.raizArvore, idUsuario);
+    if(user == nullptr)
+    {
+        saida << "ERROR USER_NOT_FOUND\n";
+        return;
+    }
+    Publicacao *post = buscarArvorePost(rede.raizArvorePosts, idPost);
+    if(post == nullptr)
+    {
+        saida << "ERROR POST_NOT_FOUND\n";
+        return;
+    }
+    
+    NoLista *aux= post->usersLike;
+    while(aux != nullptr)
+    {
+        if(aux->user == user){
+            saida << "ERROR ALREADY_LIKED\n";
+            return;
+        }
+        aux = aux->prox;
+    }
+
+    post->curtidas++;
+    insereLista(post->usersLike, user);
+    saida << "LIKED\n";
+    usuario *autor = buscarArvore(rede.raizArvore, post->idAutor);
+    addNotificacoes(*(autor->notificacoes), 2, user->id, post->id);
 }
 
 void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
