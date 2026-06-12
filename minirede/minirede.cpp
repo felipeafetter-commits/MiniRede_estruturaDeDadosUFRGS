@@ -592,6 +592,17 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             entrada >> id >> k;
             consultarNotificacoes(rede, id, k, saida);
         }
+
+        else if (comando == "ADD_POST")
+        {
+
+            int idPost;
+            int idAutor;
+            int timestamp;
+            string texto;
+            entrada >> idPost >> idAutor >> timestamp >> texto;
+            cadastrarPublicacao(rede, idPost, idAutor, timestamp, texto.c_str(), saida);
+        }
     }
 }
 
