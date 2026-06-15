@@ -4,6 +4,75 @@
 
 using namespace std;
 
+//passar arvore para lista e depois fazer mergesort para ordenar por numero de likes
+void arvParaLista(NoArvorePosts* raiz, NoRanking *&inicio)
+{
+    if(raiz==nullptr)return;
+    
+    arvParaLista(raiz->esq, inicio);
+    
+    NoRanking* novo = new NoRanking;
+    novo->post = raiz->publicacao;
+    novo->prox = inicio;
+    inicio = novo;
+    
+    arvParaLista(raiz->dir, inicio);
+}
+
+NoRanking *merge(NoRanking *esq, NoRanking *dir)
+{
+    if(esq == nullptr)return dir;
+    if(dir== nullptr)return esq;
+
+    NoRanking *res = nullptr;
+
+    if(esq->post->curtidas > dir->post->curtidas || esq->post->curtidas == dir->post->curtidas && dir->post->id
+    >esq->post->id){
+        res = esq;
+        res->prox = merge(esq->prox, dir);
+    }
+    
+    else
+    {
+        res = dir;
+        res->prox=merge(esq, dir->prox);
+    }
+    return res;
+}
+
+void Particao(NoRanking *fonte, NoRanking *&inicio, NoRanking *&fim)
+{
+    NoRanking *rapido;
+    NoRanking *lento;
+
+    lento = fonte;
+    rapido = fonte->prox;
+
+    while(rapido!= nullptr){
+        rapido = rapido->prox;
+        if(rapido != nullptr){
+            lento = lento->prox;
+            rapido= rapido->prox;
+        }
+    }
+    inicio = fonte;
+    fim = lento->prox;
+    lento->prox = nullptr;
+}
+
+void mergeSort(NoRanking *&inicio)
+{
+    if(inicio == nullptr || inicio->prox == nullptr)return;
+
+    NoRanking *a= nullptr;
+    NoRanking *b= nullptr;
+
+    Particao(inicio, a, b);
+
+    mergeSort(a);
+    mergeSort(b);
+    inicio = merge(a, b);
+}
 // funcoes de fila de notificacoes
 void addNotificacoes(Fila &notificacoes, int tipo, int idUser, int idPost)
 {
@@ -611,6 +680,13 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             entrada >> userId >> postId;
             curtirPublicacao(rede, userId, postId, saida); 
         }
+        
+        else if(comando == "TOP_POSTS")
+        {
+            int k;
+            entrada >> k;
+            listarTopPosts(rede, k, saida);
+        }
     }
 }
 
@@ -772,21 +848,21 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
             no->publicacao = publicacao;
             no->prox = nullptr;
 
-            if (auxUser->publicacoes == nullptr)
+            if (auxUser->publicacoes == nullptr || publicacao->timestamp > auxUser->publicacoes->publicacao->timestamp)
             {
+                no->prox = auxUser->publicacoes;
                 auxUser->publicacoes = no;
             }
             else
             {
                 noListPosts *aux = auxUser->publicacoes;
-                noListPosts *aux2 = nullptr;
 
-                while (aux != nullptr)
+                while (aux->prox != nullptr && aux->prox->publicacao->timestamp > publicacao->timestamp)
                 {
-                    aux2 = aux;
                     aux = aux->prox;
                 }
-                aux2->prox = no;
+                no->prox=aux->prox;
+                aux->prox = no;
             }
 
             saida << "POST_ADDED\n";
@@ -867,12 +943,33 @@ void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &s
 
 void gerarFeed(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
 {
-    // TODO
+    
 }
 
 void listarTopPosts(MiniRede &rede, int k, std::ostream &saida)
 {
-    // TODO
+    NoRanking *Ranking = nullptr;
+
+    arvParaLista(rede.raizArvorePosts, Ranking);
+
+    mergeSort(Ranking);
+
+    saida << "TOP_POSTS_BEGIN\n";
+    NoRanking *atual = Ranking;
+    while(atual != nullptr && k>0){
+        saida<< "POST " << atual->post->id << " " << atual->post->idAutor << " " << atual->post->timestamp << " "
+        << atual->post->curtidas << " " << atual->post->texto << "\n";
+
+        k--;
+        atual = atual->prox;
+    }
+    saida << "TOP_POSTS_END\n";
+    atual = Ranking;
+    while(atual != nullptr){
+        NoRanking *aux = atual;
+        atual = atual->prox;
+        delete aux;
+    }
 }
 
 int main()

@@ -21,6 +21,7 @@ struct NoArvorePosts;
 struct MiniRede;
 struct Fila;
 struct NoNotificacao;
+struct NoRanking;
 
 struct Fila{
     NoNotificacao *inicio;
@@ -80,6 +81,12 @@ struct NoArvorePosts
     NoArvorePosts *esq;
     NoArvorePosts *dir;
     int FB = 0;
+};
+
+struct NoRanking
+{
+    Publicacao *post;
+    NoRanking *prox;
 };
 
 
@@ -145,6 +152,10 @@ NoArvore *insereAVL(NoArvore *a, usuario *novoUsuario, bool &aumentouAltura);
 usuario *buscarArvore(NoArvore *no, int idBuscado);
 void imprimeEmOrdem(NoArvore *No, std::ostream &saida);
 bool insereLista(NoLista *&inicio, usuario *n);
-void addNotificacoes(Fila& notificacoes, string mensagem);
+void addNotificacoes(Fila &notificacoes, int tipo, int idUser, int idPost);
+void arvParaLista(NoArvorePosts* raiz, NoRanking *&inicio);
+NoRanking *merge(NoRanking *esq, NoRanking *dir);
+void Particao(NoRanking *fonte, NoRanking *&inicio, NoRanking *&fim);
+void mergeSort(NoRanking *&inicio);
 
 #endif
