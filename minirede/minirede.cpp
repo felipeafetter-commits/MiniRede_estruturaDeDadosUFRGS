@@ -611,100 +611,6 @@ void liberarMiniRede(MiniRede &rede)
     // TODO
 }
 
-void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &saida)
-{
-    // TODO: ler comandos da entrada padrao ate END.
-    // Para cada comando, chamar a funcao correspondente.
-    // Nao imprimir menu, prompt ou texto extra.
-    string comando;
-    while (entrada >> comando)
-    {
-        if (comando == "END")
-        {
-            break;
-        }
-        else if (comando == "ADD_USER")
-        {
-            int id;
-            string username;
-            string nome;
-            entrada >> id >> username >> nome;
-            cadastrarUsuario(rede, id, username.c_str(), nome.c_str(), saida);
-        }
-        else if (comando == "FIND_USER")
-        {
-            int id;
-            entrada >> id;
-            buscarUsuarioPorId(rede, id, saida);
-        }
-        else if (comando == "FIND_USERNAME")
-        {
-            string username;
-            entrada >> username;
-            buscarUsuarioPorUsername(rede, username.c_str(), saida);
-        }
-        else if (comando == "LIST_USERS")
-        {
-            listarUsuarios(rede, saida);
-        }
-        else if (comando == "FOLLOW")
-        {
-            int id1;
-            int id2;
-            entrada >> id1 >> id2;
-            seguirUsuario(rede, id1, id2, saida);
-        }
-        else if (comando == "LIST_FOLLOWING")
-        {
-            int id;
-            entrada >> id;
-            listarSeguindo(rede, id, saida);
-        }
-        else if (comando == "GET_NOTIFICATIONS")
-        {
-            int id;
-            int k;
-            entrada >> id >> k;
-            consultarNotificacoes(rede, id, k, saida);
-        }
-
-        else if (comando == "ADD_POST")
-        {
-
-            int idPost;
-            int idAutor;
-            int timestamp;
-            string texto;
-            entrada >> idPost >> idAutor >> timestamp >> texto;
-            cadastrarPublicacao(rede, idPost, idAutor, timestamp, texto.c_str(), saida);
-        }
-
-        else if (comando == "LIKE")
-        {
-            int userId;
-            int postId;
-            entrada >> userId >> postId;
-            curtirPublicacao(rede, userId, postId, saida);
-        }
-
-        else if (comando == "TOP_POSTS")
-        {
-            int k;
-            entrada >> k;
-            listarTopPosts(rede, k, saida);
-        }
-
-        else if (comando == "ADD_COMENT")
-        {
-            int idUsuario;
-            int idPost;
-            char comentario[TAM_TEXTO];
-            entrada >> idUsuario >> idPost >> comentario;
-            adicionarComentarios(idUsuario, idPost, comentario, rede, saida);
-        }
-    }
-}
-
 void cadastrarUsuario(MiniRede &rede, int id, const char username[], const char nomeCompleto[], std::ostream &saida)
 {
     // verifica o username
@@ -924,41 +830,55 @@ void curtirPublicacao(MiniRede &rede, int idUsuario, int idPost, std::ostream &s
     addNotificacoes(*(autor->notificacoes), 2, user->id, post->id);
 }
 
-void adicionarComentarios(int idUsuario, int idPost, char comentario[], MiniRede &rede, std::ostream &saida)
+void adicionarComentarios(int idUsuario, int idPost, const char comentario[], MiniRede &rede, std::ostream &saida)
 {
+    usuario *user = buscarArvore(rede.raizArvore, idUsuario);
+    if (user)
+    {
 
-    Publicacao *post = buscarArvorePost(rede.raizArvorePosts, idPost);
-    if (post == nullptr)
-    {
-        saida << "ERROR POST_NOT_FOUND\n";
-        return;
-    }
-    else
-    {
-        noComentario *Comentario = new noComentario;
-        Comentario->idAutor = idUsuario;
-        strncpy(Comentario->comentario, comentario, TAM_TEXTO - 1);
-        Comentario->comentario[TAM_TEXTO - 1] = '\0';
-        Comentario->prox = nullptr;
-        if (post->comentarios)
+        Publicacao *post = buscarArvorePost(rede.raizArvorePosts, idPost);
+        if (post == nullptr)
         {
-            noComentario *aux = post->comentarios;
-            noComentario *aux2 = nullptr;
-
-            while (aux != nullptr)
-            {
-                aux2 = aux;
-                aux = aux->prox;
-            }
-
-            aux2->prox = Comentario;
+            saida << "ERROR POST_NOT_FOUND\n";
+            return;
         }
         else
         {
+            noComentario *Comentario = new noComentario;
+            Comentario->idAutor = idUsuario;
+            strncpy(Comentario->comentario, comentario, TAM_TEXTO - 1);
+            Comentario->comentario[TAM_TEXTO - 1] = '\0';
+            Comentario->prox = nullptr;
+            if (post->comentarios)
+            {
+                noComentario *aux = post->comentarios;
+                noComentario *aux2 = nullptr;
 
-            post->comentarios = Comentario;
+                while (aux != nullptr)
+                {
+                    aux2 = aux;
+                    aux = aux->prox;
+                }
+
+                aux2->prox = Comentario;
+                usuario *autor = buscarArvore(rede.raizArvore, post->idAutor);
+                addNotificacoes(*(autor->notificacoes), 3, user->id, post->id);
+            }
+            else
+            {
+
+                post->comentarios = Comentario;
+                usuario *autor = buscarArvore(rede.raizArvore, post->idAutor);
+                addNotificacoes(*(autor->notificacoes), 3, user->id, post->id);
+            }
         }
     }
+    else
+    {
+        saida << "ERROR ALREADY_LIKED\n";
+        return;
+    }
+    saida << "COMENTED\n";
 }
 
 void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
@@ -986,7 +906,7 @@ void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &s
         }
         else if (temp->tipo == 3)
         {
-             saida << "NOTIFICATION COMENT " << temp->idUser << " " << temp->idPost << "\n";
+            saida << "NOTIFICATION COMENT " << temp->idUser << " " << temp->idPost << "\n";
         }
 
         user->notificacoes->inicio = user->notificacoes->inicio->prox;
@@ -1028,6 +948,100 @@ void listarTopPosts(MiniRede &rede, int k, std::ostream &saida)
         NoRanking *aux = atual;
         atual = atual->prox;
         delete aux;
+    }
+}
+
+void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &saida)
+{
+    // TODO: ler comandos da entrada padrao ate END.
+    // Para cada comando, chamar a funcao correspondente.
+    // Nao imprimir menu, prompt ou texto extra.
+    string comando;
+    while (entrada >> comando)
+    {
+        if (comando == "END")
+        {
+            break;
+        }
+        else if (comando == "ADD_USER")
+        {
+            int id;
+            string username;
+            string nome;
+            entrada >> id >> username >> nome;
+            cadastrarUsuario(rede, id, username.c_str(), nome.c_str(), saida);
+        }
+        else if (comando == "FIND_USER")
+        {
+            int id;
+            entrada >> id;
+            buscarUsuarioPorId(rede, id, saida);
+        }
+        else if (comando == "FIND_USERNAME")
+        {
+            string username;
+            entrada >> username;
+            buscarUsuarioPorUsername(rede, username.c_str(), saida);
+        }
+        else if (comando == "LIST_USERS")
+        {
+            listarUsuarios(rede, saida);
+        }
+        else if (comando == "FOLLOW")
+        {
+            int id1;
+            int id2;
+            entrada >> id1 >> id2;
+            seguirUsuario(rede, id1, id2, saida);
+        }
+        else if (comando == "LIST_FOLLOWING")
+        {
+            int id;
+            entrada >> id;
+            listarSeguindo(rede, id, saida);
+        }
+        else if (comando == "GET_NOTIFICATIONS")
+        {
+            int id;
+            int k;
+            entrada >> id >> k;
+            consultarNotificacoes(rede, id, k, saida);
+        }
+
+        else if (comando == "ADD_POST")
+        {
+
+            int idPost;
+            int idAutor;
+            int timestamp;
+            string texto;
+            entrada >> idPost >> idAutor >> timestamp >> texto;
+            cadastrarPublicacao(rede, idPost, idAutor, timestamp, texto.c_str(), saida);
+        }
+
+        else if (comando == "LIKE")
+        {
+            int userId;
+            int postId;
+            entrada >> userId >> postId;
+            curtirPublicacao(rede, userId, postId, saida);
+        }
+
+        else if (comando == "TOP_POSTS")
+        {
+            int k;
+            entrada >> k;
+            listarTopPosts(rede, k, saida);
+        }
+
+        else if (comando == "ADD_COMENT")
+        {
+            int idUsuario;
+            int idPost;
+            string comentario;
+            entrada >> idUsuario >> idPost >> comentario;
+            adicionarComentarios(idUsuario, idPost, comentario.c_str(), rede, saida);
+        }
     }
 }
 
