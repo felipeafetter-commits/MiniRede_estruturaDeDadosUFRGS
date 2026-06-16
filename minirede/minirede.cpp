@@ -4,38 +4,41 @@
 
 using namespace std;
 
-//passar arvore para lista e depois fazer mergesort para ordenar por numero de likes
-void arvParaLista(NoArvorePosts* raiz, NoRanking *&inicio)
+// passar arvore para lista e depois fazer mergesort para ordenar por numero de likes
+void arvParaLista(NoArvorePosts *raiz, NoRanking *&inicio)
 {
-    if(raiz==nullptr)return;
-    
+    if (raiz == nullptr)
+        return;
+
     arvParaLista(raiz->esq, inicio);
-    
-    NoRanking* novo = new NoRanking;
+
+    NoRanking *novo = new NoRanking;
     novo->post = raiz->publicacao;
     novo->prox = inicio;
     inicio = novo;
-    
+
     arvParaLista(raiz->dir, inicio);
 }
 
 NoRanking *merge(NoRanking *esq, NoRanking *dir)
 {
-    if(esq == nullptr)return dir;
-    if(dir== nullptr)return esq;
+    if (esq == nullptr)
+        return dir;
+    if (dir == nullptr)
+        return esq;
 
     NoRanking *res = nullptr;
 
-    if(esq->post->curtidas > dir->post->curtidas || esq->post->curtidas == dir->post->curtidas && dir->post->id
-    >esq->post->id){
+    if (esq->post->curtidas > dir->post->curtidas || esq->post->curtidas == dir->post->curtidas && dir->post->id > esq->post->id)
+    {
         res = esq;
         res->prox = merge(esq->prox, dir);
     }
-    
+
     else
     {
         res = dir;
-        res->prox=merge(esq, dir->prox);
+        res->prox = merge(esq, dir->prox);
     }
     return res;
 }
@@ -48,11 +51,13 @@ void Particao(NoRanking *fonte, NoRanking *&inicio, NoRanking *&fim)
     lento = fonte;
     rapido = fonte->prox;
 
-    while(rapido!= nullptr){
+    while (rapido != nullptr)
+    {
         rapido = rapido->prox;
-        if(rapido != nullptr){
+        if (rapido != nullptr)
+        {
             lento = lento->prox;
-            rapido= rapido->prox;
+            rapido = rapido->prox;
         }
     }
     inicio = fonte;
@@ -62,10 +67,11 @@ void Particao(NoRanking *fonte, NoRanking *&inicio, NoRanking *&fim)
 
 void mergeSort(NoRanking *&inicio)
 {
-    if(inicio == nullptr || inicio->prox == nullptr)return;
+    if (inicio == nullptr || inicio->prox == nullptr)
+        return;
 
-    NoRanking *a= nullptr;
-    NoRanking *b= nullptr;
+    NoRanking *a = nullptr;
+    NoRanking *b = nullptr;
 
     Particao(inicio, a, b);
 
@@ -672,20 +678,29 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             entrada >> idPost >> idAutor >> timestamp >> texto;
             cadastrarPublicacao(rede, idPost, idAutor, timestamp, texto.c_str(), saida);
         }
-        
-        else if(comando == "LIKE")
+
+        else if (comando == "LIKE")
         {
             int userId;
             int postId;
             entrada >> userId >> postId;
-            curtirPublicacao(rede, userId, postId, saida); 
+            curtirPublicacao(rede, userId, postId, saida);
         }
-        
-        else if(comando == "TOP_POSTS")
+
+        else if (comando == "TOP_POSTS")
         {
             int k;
             entrada >> k;
             listarTopPosts(rede, k, saida);
+        }
+
+        else if (comando == "ADD_COMENT")
+        {
+            int idUsuario;
+            int idPost;
+            char comentario[TAM_TEXTO];
+            entrada >> idUsuario >> idPost >> comentario;
+            adicionarComentarios(idUsuario, idPost, comentario, rede, saida);
         }
     }
 }
@@ -838,6 +853,7 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
             publicacao->texto[TAM_TEXTO - 1] = '\0';
             publicacao->curtidas = curtidas;
             publicacao->usersLike = nullptr;
+            publicacao->comentarios = nullptr;
 
             // add na arvore de publicaçao
             bool aumentouAltura = false;
@@ -861,7 +877,7 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
                 {
                     aux = aux->prox;
                 }
-                no->prox=aux->prox;
+                no->prox = aux->prox;
                 aux->prox = no;
             }
 
@@ -878,22 +894,23 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
 void curtirPublicacao(MiniRede &rede, int idUsuario, int idPost, std::ostream &saida)
 {
     usuario *user = buscarArvore(rede.raizArvore, idUsuario);
-    if(user == nullptr)
+    if (user == nullptr)
     {
         saida << "ERROR USER_NOT_FOUND\n";
         return;
     }
     Publicacao *post = buscarArvorePost(rede.raizArvorePosts, idPost);
-    if(post == nullptr)
+    if (post == nullptr)
     {
         saida << "ERROR POST_NOT_FOUND\n";
         return;
     }
-    
-    NoLista *aux= post->usersLike;
-    while(aux != nullptr)
+
+    NoLista *aux = post->usersLike;
+    while (aux != nullptr)
     {
-        if(aux->user == user){
+        if (aux->user == user)
+        {
             saida << "ERROR ALREADY_LIKED\n";
             return;
         }
@@ -905,6 +922,43 @@ void curtirPublicacao(MiniRede &rede, int idUsuario, int idPost, std::ostream &s
     saida << "LIKED\n";
     usuario *autor = buscarArvore(rede.raizArvore, post->idAutor);
     addNotificacoes(*(autor->notificacoes), 2, user->id, post->id);
+}
+
+void adicionarComentarios(int idUsuario, int idPost, char comentario[], MiniRede &rede, std::ostream &saida)
+{
+
+    Publicacao *post = buscarArvorePost(rede.raizArvorePosts, idPost);
+    if (post == nullptr)
+    {
+        saida << "ERROR POST_NOT_FOUND\n";
+        return;
+    }
+    else
+    {
+        noComentario *Comentario = new noComentario;
+        Comentario->idAutor = idUsuario;
+        strncpy(Comentario->comentario, comentario, TAM_TEXTO - 1);
+        Comentario->comentario[TAM_TEXTO - 1] = '\0';
+        Comentario->prox = nullptr;
+        if (post->comentarios)
+        {
+            noComentario *aux = post->comentarios;
+            noComentario *aux2 = nullptr;
+
+            while (aux != nullptr)
+            {
+                aux2 = aux;
+                aux = aux->prox;
+            }
+
+            aux2->prox = Comentario;
+        }
+        else
+        {
+
+            post->comentarios = Comentario;
+        }
+    }
 }
 
 void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
@@ -930,6 +984,10 @@ void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &s
         {
             saida << "NOTIFICATION LIKE " << temp->idUser << " " << temp->idPost << "\n";
         }
+        else if (temp->tipo == 3)
+        {
+             saida << "NOTIFICATION COMENT " << temp->idUser << " " << temp->idPost << "\n";
+        }
 
         user->notificacoes->inicio = user->notificacoes->inicio->prox;
         delete temp;
@@ -943,7 +1001,6 @@ void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &s
 
 void gerarFeed(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
 {
-    
 }
 
 void listarTopPosts(MiniRede &rede, int k, std::ostream &saida)
@@ -956,16 +1013,18 @@ void listarTopPosts(MiniRede &rede, int k, std::ostream &saida)
 
     saida << "TOP_POSTS_BEGIN\n";
     NoRanking *atual = Ranking;
-    while(atual != nullptr && k>0){
-        saida<< "POST " << atual->post->id << " " << atual->post->idAutor << " " << atual->post->timestamp << " "
-        << atual->post->curtidas << " " << atual->post->texto << "\n";
+    while (atual != nullptr && k > 0)
+    {
+        saida << "POST " << atual->post->id << " " << atual->post->idAutor << " " << atual->post->timestamp << " "
+              << atual->post->curtidas << " " << atual->post->texto << "\n";
 
         k--;
         atual = atual->prox;
     }
     saida << "TOP_POSTS_END\n";
     atual = Ranking;
-    while(atual != nullptr){
+    while (atual != nullptr)
+    {
         NoRanking *aux = atual;
         atual = atual->prox;
         delete aux;

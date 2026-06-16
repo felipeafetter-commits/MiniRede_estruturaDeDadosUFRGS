@@ -22,6 +22,7 @@ struct MiniRede;
 struct Fila;
 struct NoNotificacao;
 struct NoRanking;
+struct noComentario;
 
 struct Fila{
     NoNotificacao *inicio;
@@ -32,7 +33,14 @@ struct NoNotificacao{
     int idPost;
     int idUser;
     NoNotificacao *prox;
-    int tipo;  // 1: seguir  2: like 
+    int tipo;  // 1: seguir  2: like // 3: comentário 
+};
+
+struct noComentario
+{
+    int idAutor;
+    char comentario[TAM_TEXTO];
+    noComentario *prox;
 };
 
 struct Publicacao
@@ -43,6 +51,7 @@ struct Publicacao
     char texto[TAM_TEXTO];
     int curtidas;
     NoLista *usersLike;
+    noComentario *comentarios;
 
 }; 
 struct usuario
