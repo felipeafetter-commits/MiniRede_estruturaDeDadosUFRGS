@@ -43,6 +43,26 @@ NoRanking *merge(NoRanking *esq, NoRanking *dir)
     return res;
 }
 
+NoRanking *mergeFeed(NoRanking *a, NoRanking *b)
+{
+    if(a == nullptr)return b;
+    if(b== nullptr)return a;
+
+    NoRanking *res = nullptr;
+
+    if(a->post->timestamp> b->post->timestamp || a->post->timestamp == b->post->timestamp && a->post->id < b->post->id)
+    {
+        res = a;
+        res->prox = merge(a->prox, b);
+    }
+    else
+    {
+        res= b;
+        res->prox = merge(a, b->prox);
+    }
+    return res;
+}
+
 void Particao(NoRanking *fonte, NoRanking *&inicio, NoRanking *&fim)
 {
     NoRanking *rapido;
@@ -78,6 +98,19 @@ void mergeSort(NoRanking *&inicio)
     mergeSort(a);
     mergeSort(b);
     inicio = merge(a, b);
+}
+
+void mergeSortFeed(NoRanking *&inicio)
+{
+    if(inicio == nullptr|| inicio->prox== nullptr)return;
+    NoRanking *a= nullptr;
+    NoRanking *b=nullptr;
+
+    Particao(inicio, a, b);
+    mergeSortFeed(a);
+    mergeSortFeed(b);
+    inicio= mergeFeed(a, b);
+
 }
 // funcoes de fila de notificacoes
 void addNotificacoes(Fila &notificacoes, int tipo, int idUser, int idPost)
@@ -596,11 +629,11 @@ bool insereLista(NoLista *&inicio, usuario *n)
     {
         atual = atual->prox;
     }
-    if (atual->prox->user->id == n->id && atual->prox != nullptr)
+    if (atual->prox != nullptr && atual->prox->user->id == n->id)
         return false;
 
     NoLista *novo = new NoLista;
-    novo->user == n;
+    novo->user = n;
     novo->prox = atual->prox;
     atual->prox = novo;
     return true;
@@ -693,6 +726,7 @@ void seguirUsuario(MiniRede &rede, int idSeguidor, int idSeguido, std::ostream &
     if (idSeguido == idSeguidor)
     {
         saida << "ERROR CANNOT_FOLLOW_SELF\n";
+        return;
     }
     usuario *a = buscarArvore(rede.raizArvore, idSeguidor);
     usuario *b = buscarArvore(rede.raizArvore, idSeguido);
@@ -921,6 +955,50 @@ void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &s
 
 void gerarFeed(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
 {
+    usuario *user = buscarArvore(rede.raizArvore, idUsuario);
+    if(user== nullptr)
+    {
+        saida << "ERROR USER_NOT_FOUND\n";
+        return;
+    }
+
+    NoRanking *Feed = nullptr;
+
+    NoLista *atual = user->seguindo;
+    while(atual!=nullptr){
+        noListPosts *post =atual->user->publicacoes;
+
+        while(post!=nullptr){
+            NoRanking *novo = new NoRanking;
+            novo->post= post->publicacao;
+            novo->prox= Feed;
+            Feed = novo;
+            post=post->prox;
+        }
+        atual= atual->prox;
+    }
+
+    mergeSortFeed(Feed);
+
+    saida << "FEED_BEGIN\n";
+    NoRanking *atualPost = Feed;
+    while(atualPost != nullptr && k>0){
+        saida << "POST " << atualPost->post->id << " " << atualPost->post->idAutor << " " << atualPost->post->timestamp << " " << 
+        atualPost->post->curtidas << " " << atualPost->post->texto << "\n";
+
+        atualPost=atualPost->prox;
+        k--;
+    }
+
+    saida << "FEED_END\n";
+    //limpeza
+    NoRanking *atualLimpeza = Feed;
+    while(atualLimpeza!= nullptr)
+    {
+        NoRanking *aux = atualLimpeza;
+        atualLimpeza = atualLimpeza->prox;
+        delete aux;
+    }
 }
 
 void listarTopPosts(MiniRede &rede, int k, std::ostream &saida)
@@ -1041,6 +1119,14 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             string comentario;
             entrada >> idUsuario >> idPost >> comentario;
             adicionarComentarios(idUsuario, idPost, comentario.c_str(), rede, saida);
+        }
+
+        else if(comando == "FEED")
+        {
+            int idUser;
+            int k;
+            entrada >> idUser >> k;
+            gerarFeed(rede, idUser, k, saida);
         }
     }
 }

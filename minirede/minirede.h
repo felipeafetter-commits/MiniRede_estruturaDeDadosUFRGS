@@ -166,5 +166,7 @@ void arvParaLista(NoArvorePosts* raiz, NoRanking *&inicio);
 NoRanking *merge(NoRanking *esq, NoRanking *dir);
 void Particao(NoRanking *fonte, NoRanking *&inicio, NoRanking *&fim);
 void mergeSort(NoRanking *&inicio);
+void mergeSortFeed(NoRanking *&inicio);
+NoRanking *mergeFeed(NoRanking *a, NoRanking *b);
 
 #endif
