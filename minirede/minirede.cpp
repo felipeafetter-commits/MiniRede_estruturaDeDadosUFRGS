@@ -790,7 +790,7 @@ void buscarUsuarioPorId(MiniRede &rede, int id, std::ostream &saida)
     }
     else
     {
-        saida << "USER_NOT_FOUND\n";
+        saida << "ERROR USER_NOT_FOUND\n";
     }
 }
 
