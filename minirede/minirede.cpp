@@ -4,6 +4,97 @@
 
 using namespace std;
 
+//funcoes para liberar os ponteiros
+void liberarLikes(NoLista *p)
+{
+    while(p!=nullptr){
+        NoLista *aux =p;
+        p=p->prox;
+        delete aux;
+    }
+}
+
+void liberarComentario(noComentario *p)
+{
+    while(p!=nullptr){
+        noComentario *aux =p;
+        p=p->prox;
+        delete aux;
+    }
+}
+
+void liberarArvorePosts(NoArvorePosts *p)
+{
+    if(p==nullptr)return;
+    liberarArvorePosts(p->esq);
+    liberarArvorePosts(p->dir);
+
+    if(p->publicacao!=nullptr){
+        liberarLikes(p->publicacao->usersLike);
+        liberarComentario(p->publicacao->comentarios);
+        delete p->publicacao;
+    }
+    delete p;
+}
+
+void liberarNotificacoes(Fila *p)
+{
+    if(p==nullptr)return;
+    NoNotificacao *atual = p->inicio;
+    while(atual!=nullptr){
+        NoNotificacao *aux = atual;
+        atual=atual->prox;
+        delete aux;
+    }
+    delete p;
+}
+
+void liberarPosts(noListPosts *p)
+{
+    while(p!=nullptr){
+        noListPosts *aux= p;
+        p=p->prox;
+        delete aux;
+    }
+}
+
+void liberarSeguindo(NoLista *p)
+{
+    while(p!=nullptr){
+        NoLista *aux= p;
+        p=p->prox;
+        delete aux;
+    }
+}
+
+void liberarArvoreUser(NoArvore *p)
+{
+    if(p==nullptr)return;
+
+    liberarArvoreUser(p->esq);
+    liberarArvoreUser(p->dir);
+
+    if(p->user!=nullptr){
+        liberarSeguindo(p->user->seguindo);
+        liberarPosts(p->user->publicacoes);
+        liberarNotificacoes(p->user->notificacoes);
+        delete p->user;
+    }
+    delete p;
+}
+
+void liberarHash(NoLista *tabela[], int tamTabela)
+{
+    for(int i= 0; i<tamTabela; i++){
+        NoLista *atual = tabela[i];
+        while(atual!=nullptr){
+            NoLista *aux = atual;
+            atual=atual->prox;
+            delete aux;
+        }
+        tabela[i]= nullptr;
+    }
+}
 // passar arvore para lista e depois fazer mergesort para ordenar por numero de likes
 void arvParaLista(NoArvorePosts *raiz, NoRanking *&inicio)
 {
@@ -641,7 +732,11 @@ bool insereLista(NoLista *&inicio, usuario *n)
 
 void liberarMiniRede(MiniRede &rede)
 {
-    // TODO
+    liberarArvorePosts(rede.raizArvorePosts);
+    rede.raizArvorePosts=nullptr;
+    liberarArvoreUser(rede.raizArvore);
+    rede.raizArvore=nullptr;
+    liberarHash(rede.tabelaHash, TAM_HASH);
 }
 
 void cadastrarUsuario(MiniRede &rede, int id, const char username[], const char nomeCompleto[], std::ostream &saida)

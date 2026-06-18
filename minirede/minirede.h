@@ -168,5 +168,13 @@ void Particao(NoRanking *fonte, NoRanking *&inicio, NoRanking *&fim);
 void mergeSort(NoRanking *&inicio);
 void mergeSortFeed(NoRanking *&inicio);
 NoRanking *mergeFeed(NoRanking *a, NoRanking *b);
+void liberarLikes(NoLista *p);
+void liberarComentario(noComentario *p);
+void liberarArvorePosts(NoArvorePosts *p);
+void liberarNotificacoes(Fila *p);
+void liberarPosts(noListPosts *p);
+void liberarSeguindo(NoLista *p);
+void liberarArvoreUser(NoArvore *p);
+void liberarHash(NoLista *tabela[], int tamTabela);
 
 #endif
