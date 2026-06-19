@@ -23,6 +23,17 @@ struct Fila;
 struct NoNotificacao;
 struct NoRanking;
 struct noComentario;
+struct Pilha;
+struct NoPilhaPub;
+
+struct Pilha{
+    NoPilhaPub *topo;
+};
+
+struct NoPilhaPub{
+    Publicacao *p;
+    NoPilhaPub *prox;
+};
 
 struct Fila{
     NoNotificacao *inicio;
@@ -99,14 +110,12 @@ struct NoRanking
 };
 
 
-
-
 struct MiniRede
 {
     NoLista *tabelaHash[TAM_HASH];
     NoArvore *raizArvore;
     NoArvorePosts *raizArvorePosts;
-
+    Pilha pilhaPosts;
 };
 
 // Sugestao de structs que provavelmente serao necessarias:
@@ -181,5 +190,8 @@ NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *maior, bool& di
 NoArvorePosts *balancearEsq(NoArvorePosts *a, bool &diminuiuAltura);
 NoArvorePosts *balancearDir(NoArvorePosts *a, bool &diminuiuAltura);
 void deletaPost(MiniRede &rede, int idPost, int idAutor, std::ostream &saida);
+void push(Pilha &pilha, Publicacao *post);
+void inicializarPilha(Pilha &pilha);
+void piilhaPostsRecentes(Pilha &pilha, int k, std::ostream &saida);
 
 #endif

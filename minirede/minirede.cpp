@@ -3,7 +3,14 @@
 #include <string>
 
 using namespace std;
-
+//funcoes pilha
+void push(Pilha &pilha, Publicacao *post)
+{
+    NoPilhaPub *novo = new NoPilhaPub;
+    novo->p= post;
+    novo->prox= pilha.topo;
+    pilha.topo = novo;
+}
 //funcoes para liberar os ponteiros
 void liberarLikes(NoLista *p)
 {
@@ -269,6 +276,11 @@ void inicializarMiniRede(MiniRede &rede)
 
     rede.raizArvore = nullptr;
     rede.raizArvorePosts = nullptr;
+    rede.pilhaPosts.topo = nullptr;
+}
+
+void inicializarPilha(Pilha &pilha){
+    pilha.topo= nullptr;
 }
 
 // funcoes de arvore de usuários aqui:
@@ -1063,6 +1075,9 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
             noListPosts *no = new noListPosts;
             no->publicacao = publicacao;
             no->prox = nullptr;
+            
+            //add na pilha de posts
+            push(rede.pilhaPosts, publicacao);
 
             if (auxUser->publicacoes == nullptr || publicacao->timestamp > auxUser->publicacoes->publicacao->timestamp)
             {
@@ -1327,6 +1342,26 @@ void listarTopPosts(MiniRede &rede, int k, std::ostream &saida)
     }
 }
 
+void piilhaPostsRecentes(Pilha &pilha, int k, std::ostream &saida){
+    if( pilha.topo == nullptr){
+        saida << "ERROR NO_NEW_POSTS\n";
+        return;
+    }
+
+    saida << "RECENT_POSTS_BEGIN\n";
+    
+    while(pilha.topo!= nullptr && k>0){
+        NoPilhaPub *atual = pilha.topo;
+        saida << "POST " << atual->p->id << " " << atual->p->idAutor << " " << atual->p->timestamp << " "
+              << atual->p->curtidas << " " << atual->p->texto << "\n";
+        
+        pilha.topo = pilha.topo->prox;
+        delete atual;
+        k--;
+    }
+    saida << "RECENT_POSTS_END\n";
+}
+
 void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &saida)
 {
     // TODO: ler comandos da entrada padrao ate END.
@@ -1431,6 +1466,12 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             int idPost, idAutor;
             entrada >> idPost >> idAutor;
             deletaPost(rede, idPost, idAutor, saida);
+        }
+
+        else if(comando == "RECENT_POSTS"){
+            int k;
+            entrada >> k;
+            piilhaPostsRecentes(rede.pilhaPosts, k,saida);
         }
 
         else{
