@@ -687,6 +687,171 @@ Publicacao *buscarArvorePost(NoArvorePosts *no, int idPost)
     return buscarArvorePost(no->dir, idPost);
 }
 
+NoArvorePosts *balancearDir(NoArvorePosts *a, bool &diminuiuAltura)
+{
+    NoArvorePosts *z = a->dir;
+    if(z->FB==-1){
+        a=rotEsq(a);
+        diminuiuAltura=true;
+    }else if(z->FB== 0){
+        a=rotEsq(a);
+        a->esq->FB= -1;
+        a->FB=1;
+        diminuiuAltura=false;
+    }else if(z->FB == -1){
+        a = rotDirEsq(a);
+        diminuiuAltura=true;
+    }
+    return a;
+}
+
+NoArvorePosts *balancearEsq(NoArvorePosts *a, bool &diminuiuAltura)
+{
+    NoArvorePosts *z = a->esq;
+    if(z->FB==-1){
+        a=rotDir(a);
+        diminuiuAltura=true;
+    }else if(z->FB== 0){
+        a=rotDir(a);
+        a->dir->FB= -1;
+        a->FB=1;
+        diminuiuAltura=false;
+    }else if(z->FB == -1){
+        a = rotEsqDir(a);
+        diminuiuAltura=true;
+    }
+    return a;
+}
+
+NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *maior, bool& diminuiuAltura){
+    if(a->dir!=nullptr){
+        a->dir = extrairMaiorPost(a->dir, maior, diminuiuAltura);
+        if(diminuiuAltura){
+            switch(a->FB){
+                case -1:
+                a->FB= 0;
+                diminuiuAltura=true;
+                break;
+
+                case 0:
+                a->FB=1;
+                diminuiuAltura= false;
+                break;
+
+                case 1:
+                a= balancearEsq(a, diminuiuAltura);
+                break;
+            }
+        }
+        return a;
+    }else{
+        maior = a;
+        diminuiuAltura= true;
+        return a->esq;
+    }
+}
+
+NoArvorePosts *removeAVLPost(NoArvorePosts *a, int idRemover, bool &diminuiuAltura)
+{
+    if(a==nullptr){
+        diminuiuAltura=false;
+        return a;
+    }
+
+    if(idRemover < a->publicacao->id){
+        a->esq= removeAVLPost(a->esq, idRemover, diminuiuAltura);
+        if(diminuiuAltura){
+            switch(a->FB){
+                case -1:
+                a->FB= 0;
+                diminuiuAltura=true;
+                break;
+
+                case 0:
+                a->FB=1;
+                diminuiuAltura= false;
+                break;
+
+                case 1:
+                a= balancearEsq(a, diminuiuAltura);
+                break;
+            }
+        }
+    }
+    else if(idRemover > a->publicacao->id){
+        a->dir= removeAVLPost(a->dir, idRemover, diminuiuAltura);
+        if(diminuiuAltura){
+            switch(a->FB){
+                case -1:
+                a->FB= 0;
+                diminuiuAltura=true;
+                break;
+
+                case 0:
+                a->FB=1;
+                diminuiuAltura= false;
+                break;
+
+                case 1:
+                a= balancearEsq(a, diminuiuAltura);
+                break;
+            }
+        }
+    }
+    else{
+        if(a->esq==nullptr || a->dir==nullptr){
+            NoArvorePosts *temp =  a;
+            if(a->esq== nullptr){
+                a= a->esq;
+            }else{
+                a= a->dir;
+            }
+            if(temp->publicacao!=nullptr){
+                liberarLikes(temp->publicacao->usersLike);
+                liberarComentario(temp->publicacao->comentarios);
+                delete temp->publicacao;
+            }
+            delete temp;
+            diminuiuAltura=true;
+        }
+        else{
+            NoArvorePosts *maiorEsq=nullptr;
+            a->esq= extrairMaiorPost(a->esq, maiorEsq, diminuiuAltura);
+            
+            Publicacao* p= a->publicacao;
+            a->publicacao= maiorEsq->publicacao;
+            maiorEsq->publicacao= p;
+
+            if(maiorEsq->publicacao!=nullptr){
+                liberarLikes(maiorEsq->publicacao->usersLike);
+                liberarComentario(maiorEsq->publicacao->comentarios);
+                delete maiorEsq->publicacao;
+            }
+            delete maiorEsq;
+
+            if(diminuiuAltura){
+                switch(a->FB){
+                case -1:
+                a->FB= 0;
+                diminuiuAltura=true;
+                break;
+
+                case 0:
+                a->FB=1;
+                diminuiuAltura= false;
+                break;
+
+                case 1:
+                a= balancearDir(a, diminuiuAltura);
+                break;
+                }
+            }
+        }
+    }
+    return a;
+}
+
+
 // Funções de arvore de publicação encerram aqui ---------------------------------------------------------------------
 
 // em ordem
@@ -924,6 +1089,44 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
         saida << "ERROR USER_NOT_FOUND\n";
         return;
     }
+}
+
+void deletaPost(MiniRede &rede, int idPost, int idAutor, std::ostream &saida){
+    usuario *aux = buscarArvore(rede.raizArvore, idAutor);
+    if(aux==nullptr){
+        saida << "ERROR USER_NOT_FOUND\n";
+        return;
+    }
+
+    Publicacao *post= buscarArvorePost(rede.raizArvorePosts, idPost);
+    if(post == nullptr){
+        saida << "ERROR POST_NOT_FOUND\n";
+        return;
+    }
+
+    if(post->idAutor != idAutor){
+        saida << "ERROR POST_NOT_FROM_THIS_USER\n";
+        return;
+    }
+
+    noListPosts *atual= aux->publicacoes;
+    noListPosts *ant = nullptr;
+
+    while(atual!= nullptr && atual->publicacao->id !=idPost){
+        ant = atual;
+        atual = atual->prox;
+    }
+    if(atual!= nullptr){
+        if(ant== nullptr){
+            aux->publicacoes= atual->prox;
+        }else{
+            ant->prox = atual->prox;
+        }
+        delete atual;
+    }
+    bool diminuiuAltura= false;
+    rede.raizArvorePosts= removeAVLPost(rede.raizArvorePosts, idPost, diminuiuAltura);
+    saida << "POST_DELETED\n";
 }
 
 void curtirPublicacao(MiniRede &rede, int idUsuario, int idPost, std::ostream &saida)
@@ -1222,6 +1425,18 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             int k;
             entrada >> idUser >> k;
             gerarFeed(rede, idUser, k, saida);
+        }
+
+        else if(comando == "DELETE_POST"){
+            int idPost, idAutor;
+            entrada >> idPost >> idAutor;
+            deletaPost(rede, idPost, idAutor, saida);
+        }
+
+        else{
+            saida << "ERROR INVALID_COMMAND\n";
+            string ignore;
+            getline(entrada, ignore);
         }
     }
 }

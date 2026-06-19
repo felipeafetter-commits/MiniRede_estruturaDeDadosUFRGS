@@ -176,5 +176,10 @@ void liberarPosts(noListPosts *p);
 void liberarSeguindo(NoLista *p);
 void liberarArvoreUser(NoArvore *p);
 void liberarHash(NoLista *tabela[], int tamTabela);
+NoArvorePosts *removeAVLPost(NoArvorePosts *a, int idRemover, bool &diminuiuAltura);
+NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *maior, bool& diminuiuAltura);
+NoArvorePosts *balancearEsq(NoArvorePosts *a, bool &diminuiuAltura);
+NoArvorePosts *balancearDir(NoArvorePosts *a, bool &diminuiuAltura);
+void deletaPost(MiniRede &rede, int idPost, int idAutor, std::ostream &saida);
 
 #endif
