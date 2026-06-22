@@ -3,89 +3,112 @@
 #include <string>
 
 using namespace std;
-//funcoes deque
-void InserirInicio(TimeLine &deque, Publicacao *post){
+// funcoes deque
+void InserirInicio(TimeLine &deque, Publicacao *post)
+{
     NoDeque *novo = new NoDeque;
     novo->post = post;
     novo->prox = deque.inicio;
-    novo->ant=nullptr;
+    novo->ant = nullptr;
 
-    if(deque.inicio!= nullptr){
-        deque.inicio->ant=novo;
-    }else{
-        deque.fim= novo;
+    if (deque.inicio != nullptr)
+    {
+        deque.inicio->ant = novo;
     }
-    deque.inicio=novo;
+    else
+    {
+        deque.fim = novo;
+    }
+    deque.inicio = novo;
 }
 
-void RemoverDeque(TimeLine &deque, int idPost){
+void RemoverDeque(TimeLine &deque, int idPost)
+{
     NoDeque *atual = deque.inicio;
 
-    while(atual !=nullptr &&atual->post->id !=idPost){
+    while (atual != nullptr && atual->post->id != idPost)
+    {
         atual = atual->prox;
     }
 
-    if(atual !=nullptr){
-        if(atual->ant!=nullptr){
-            atual->ant->prox=atual->prox;
-        }else{
-            deque.inicio= atual->prox;
+    if (atual != nullptr)
+    {
+        if (atual->ant != nullptr)
+        {
+            atual->ant->prox = atual->prox;
+        }
+        else
+        {
+            deque.inicio = atual->prox;
         }
 
-        if(atual->prox!=nullptr){
-            atual->prox->ant= atual->ant;
-        }else{
-            deque.fim=atual->ant;
+        if (atual->prox != nullptr)
+        {
+            atual->prox->ant = atual->ant;
         }
-        
+        else
+        {
+            deque.fim = atual->ant;
+        }
+
         delete atual;
     }
 }
 
-//funcoes pilha
+// funcoes pilha
 void push(Pilha &pilha, Publicacao *post)
 {
     NoPilhaPub *novo = new NoPilhaPub;
-    novo->p= post;
-    novo->prox= pilha.topo;
+    novo->p = post;
+    novo->prox = pilha.topo;
     pilha.topo = novo;
 }
 
-void removerDaPilha(Pilha &pilha, int idPost) {
+void removerDaPilha(Pilha &pilha, int idPost)
+{
     NoPilhaPub *atual = pilha.topo;
     NoPilhaPub *ant = nullptr;
 
-    while (atual != nullptr && atual->p->id != idPost) {
+    while (atual != nullptr && atual->p->id != idPost)
+    {
         ant = atual;
         atual = atual->prox;
     }
-    if (atual != nullptr) {
-        if (ant == nullptr) {
-            pilha.topo = atual->prox; 
-        } else {
+    if (atual != nullptr)
+    {
+        if (ant == nullptr)
+        {
+            pilha.topo = atual->prox;
+        }
+        else
+        {
             ant->prox = atual->prox;
         }
-        delete atual; 
+        delete atual;
     }
 }
 
-//funcoes para liberar os ponteiros
-void liberarPilha(Pilha &pilha) {
+// funcoes para liberar os ponteiros
+void liberarPilha(Pilha &pilha)
+{
     NoPilhaPub *atual = pilha.topo;
-    while (atual != nullptr) {
+    while (atual != nullptr)
+    {
         NoPilhaPub *aux = atual;
         atual = atual->prox;
-        delete aux; 
+        delete aux;
     }
     pilha.topo = nullptr;
 }
 
-void liberarTimeLine(TimeLine &deque) {
+void liberarTimeLine(TimeLine &deque)
+{
     NoDeque *atual = deque.inicio;
-    while (atual != nullptr) {
+    while (atual != nullptr)
+    {
         NoDeque *aux = atual;
         atual = atual->prox;
-        delete aux; 
+        delete aux;
     }
     deque.inicio = nullptr;
     deque.fim = nullptr;
@@ -93,29 +116,33 @@ void liberarTimeLine(TimeLine &deque) {
 
 void liberarLikes(NoLista *p)
 {
-    while(p!=nullptr){
-        NoLista *aux =p;
-        p=p->prox;
+    while (p != nullptr)
+    {
+        NoLista *aux = p;
+        p = p->prox;
         delete aux;
     }
 }
 
 void liberarComentario(noComentario *p)
 {
-    while(p!=nullptr){
-        noComentario *aux =p;
-        p=p->prox;
+    while (p != nullptr)
+    {
+        noComentario *aux = p;
+        p = p->prox;
         delete aux;
     }
 }
 
 void liberarArvorePosts(NoArvorePosts *p)
 {
-    if(p==nullptr)return;
+    if (p == nullptr)
+        return;
     liberarArvorePosts(p->esq);
     liberarArvorePosts(p->dir);
 
-    if(p->publicacao!=nullptr){
+    if (p->publicacao != nullptr)
+    {
         liberarLikes(p->publicacao->usersLike);
         liberarComentario(p->publicacao->comentarios);
         delete p->publicacao;
@@ -125,11 +152,13 @@ void liberarArvorePosts(NoArvorePosts *p)
 
 void liberarNotificacoes(Fila *p)
 {
-    if(p==nullptr)return;
+    if (p == nullptr)
+        return;
     NoNotificacao *atual = p->inicio;
-    while(atual!=nullptr){
+    while (atual != nullptr)
+    {
         NoNotificacao *aux = atual;
-        atual=atual->prox;
+        atual = atual->prox;
         delete aux;
     }
     delete p;
@@ -137,30 +166,34 @@ void liberarNotificacoes(Fila *p)
 
 void liberarPosts(noListPosts *p)
 {
-    while(p!=nullptr){
-        noListPosts *aux= p;
-        p=p->prox;
+    while (p != nullptr)
+    {
+        noListPosts *aux = p;
+        p = p->prox;
         delete aux;
     }
 }
 
 void liberarSeguindo(NoLista *p)
 {
-    while(p!=nullptr){
-        NoLista *aux= p;
-        p=p->prox;
+    while (p != nullptr)
+    {
+        NoLista *aux = p;
+        p = p->prox;
         delete aux;
     }
 }
 
 void liberarArvoreUser(NoArvore *p)
 {
-    if(p==nullptr)return;
+    if (p == nullptr)
+        return;
 
     liberarArvoreUser(p->esq);
     liberarArvoreUser(p->dir);
 
-    if(p->user!=nullptr){
+    if (p->user != nullptr)
+    {
         liberarSeguindo(p->user->seguindo);
         liberarPosts(p->user->publicacoes);
         liberarNotificacoes(p->user->notificacoes);
@@ -171,14 +204,16 @@ void liberarArvoreUser(NoArvore *p)
 
 void liberarHash(NoLista *tabela[], int tamTabela)
 {
-    for(int i= 0; i<tamTabela; i++){
+    for (int i = 0; i < tamTabela; i++)
+    {
         NoLista *atual = tabela[i];
-        while(atual!=nullptr){
+        while (atual != nullptr)
+        {
             NoLista *aux = atual;
-            atual=atual->prox;
+            atual = atual->prox;
             delete aux;
         }
-        tabela[i]= nullptr;
+        tabela[i] = nullptr;
     }
 }
 // passar arvore para lista e depois fazer mergesort para ordenar por numero de likes
@@ -222,19 +257,21 @@ NoRanking *merge(NoRanking *esq, NoRanking *dir)
 
 NoRanking *mergeFeed(NoRanking *a, NoRanking *b)
 {
-    if(a == nullptr)return b;
-    if(b== nullptr)return a;
+    if (a == nullptr)
+        return b;
+    if (b == nullptr)
+        return a;
 
     NoRanking *res = nullptr;
 
-    if(a->post->timestamp> b->post->timestamp || a->post->timestamp == b->post->timestamp && a->post->id < b->post->id)
+    if (a->post->timestamp > b->post->timestamp || a->post->timestamp == b->post->timestamp && a->post->id < b->post->id)
     {
         res = a;
         res->prox = mergeFeed(a->prox, b);
     }
     else
     {
-        res= b;
+        res = b;
         res->prox = mergeFeed(a, b->prox);
     }
     return res;
@@ -279,15 +316,15 @@ void mergeSort(NoRanking *&inicio)
 
 void mergeSortFeed(NoRanking *&inicio)
 {
-    if(inicio == nullptr|| inicio->prox== nullptr)return;
-    NoRanking *a= nullptr;
-    NoRanking *b=nullptr;
+    if (inicio == nullptr || inicio->prox == nullptr)
+        return;
+    NoRanking *a = nullptr;
+    NoRanking *b = nullptr;
 
     Particao(inicio, a, b);
     mergeSortFeed(a);
     mergeSortFeed(b);
-    inicio= mergeFeed(a, b);
-
+    inicio = mergeFeed(a, b);
 }
 // funcoes de fila de notificacoes
 void addNotificacoes(Fila &notificacoes, int tipo, int idUser, int idPost)
@@ -356,8 +393,8 @@ void inicializarMiniRede(MiniRede &rede)
     rede.raizArvore = nullptr;
     rede.raizArvorePosts = nullptr;
     rede.pilhaPosts.topo = nullptr;
-    rede.timeLineGlobal.inicio= nullptr;
-    rede.timeLineGlobal.fim=nullptr;
+    rede.timeLineGlobal.inicio = nullptr;
+    rede.timeLineGlobal.fim = nullptr;
 }
 
 // funcoes de arvore de usuários aqui:
@@ -779,17 +816,22 @@ Publicacao *buscarArvorePost(NoArvorePosts *no, int idPost)
 NoArvorePosts *balancearDir(NoArvorePosts *a, bool &diminuiuAltura)
 {
     NoArvorePosts *z = a->dir;
-    if(z->FB==-1){
-        a=rotEsq(a);
-        diminuiuAltura=true;
-    }else if(z->FB== 0){
-        a=rotEsq(a);
-        a->esq->FB= -1;
-        a->FB=1;
-        diminuiuAltura=false;
-    }else if(z->FB == -1){
+    if (z->FB == -1)
+    {
+        a = rotEsq(a);
+        diminuiuAltura = true;
+    }
+    else if (z->FB == 0)
+    {
+        a = rotEsq(a);
+        a->esq->FB = -1;
+        a->FB = 1;
+        diminuiuAltura = false;
+    }
+    else if (z->FB == -1)
+    {
         a = rotDirEsq(a);
-        diminuiuAltura=true;
+        diminuiuAltura = true;
     }
     return a;
 }
@@ -797,149 +839,176 @@ NoArvorePosts *balancearDir(NoArvorePosts *a, bool &diminuiuAltura)
 NoArvorePosts *balancearEsq(NoArvorePosts *a, bool &diminuiuAltura)
 {
     NoArvorePosts *z = a->esq;
-    if(z->FB==-1){
-        a=rotDir(a);
-        diminuiuAltura=true;
-    }else if(z->FB== 0){
-        a=rotDir(a);
-        a->dir->FB= -1;
-        a->FB=1;
-        diminuiuAltura=false;
-    }else if(z->FB == -1){
+    if (z->FB == -1)
+    {
+        a = rotDir(a);
+        diminuiuAltura = true;
+    }
+    else if (z->FB == 0)
+    {
+        a = rotDir(a);
+        a->dir->FB = -1;
+        a->FB = 1;
+        diminuiuAltura = false;
+    }
+    else if (z->FB == -1)
+    {
         a = rotEsqDir(a);
-        diminuiuAltura=true;
+        diminuiuAltura = true;
     }
     return a;
 }
 
-NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *&maior, bool& diminuiuAltura){
-    if(a->dir!=nullptr){
+NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *&maior, bool &diminuiuAltura)
+{
+    if (a->dir != nullptr)
+    {
         a->dir = extrairMaiorPost(a->dir, maior, diminuiuAltura);
-        if(diminuiuAltura){
-            switch(a->FB){
-                case -1:
-                a->FB= 0;
-                diminuiuAltura=true;
+        if (diminuiuAltura)
+        {
+            switch (a->FB)
+            {
+            case -1:
+                a->FB = 0;
+                diminuiuAltura = true;
                 break;
 
-                case 0:
-                a->FB=1;
-                diminuiuAltura= false;
+            case 0:
+                a->FB = 1;
+                diminuiuAltura = false;
                 break;
 
-                case 1:
-                a= balancearEsq(a, diminuiuAltura);
+            case 1:
+                a = balancearEsq(a, diminuiuAltura);
                 break;
             }
         }
         return a;
-    }else{
+    }
+    else
+    {
         maior = a;
-        diminuiuAltura= true;
+        diminuiuAltura = true;
         return a->esq;
     }
 }
 
 NoArvorePosts *removeAVLPost(NoArvorePosts *a, int idRemover, bool &diminuiuAltura)
 {
-    if(a==nullptr){
-        diminuiuAltura=false;
+    if (a == nullptr)
+    {
+        diminuiuAltura = false;
         return a;
     }
 
-    if(idRemover < a->publicacao->id){
-        a->esq= removeAVLPost(a->esq, idRemover, diminuiuAltura);
-        if(diminuiuAltura){
-            switch(a->FB){
-                case -1:
-                a->FB= 0;
-                diminuiuAltura=true;
+    if (idRemover < a->publicacao->id)
+    {
+        a->esq = removeAVLPost(a->esq, idRemover, diminuiuAltura);
+        if (diminuiuAltura)
+        {
+            switch (a->FB)
+            {
+            case -1:
+                a->FB = 0;
+                diminuiuAltura = true;
                 break;
 
-                case 0:
-                a->FB=1;
-                diminuiuAltura= false;
+            case 0:
+                a->FB = 1;
+                diminuiuAltura = false;
                 break;
 
-                case 1:
-                a= balancearEsq(a, diminuiuAltura);
+            case 1:
+                a = balancearEsq(a, diminuiuAltura);
                 break;
             }
         }
     }
-    else if(idRemover > a->publicacao->id){
-        a->dir= removeAVLPost(a->dir, idRemover, diminuiuAltura);
-        if(diminuiuAltura){
-            switch(a->FB){
-                case -1:
-                a->FB= 0;
-                diminuiuAltura=true;
+    else if (idRemover > a->publicacao->id)
+    {
+        a->dir = removeAVLPost(a->dir, idRemover, diminuiuAltura);
+        if (diminuiuAltura)
+        {
+            switch (a->FB)
+            {
+            case -1:
+                a->FB = 0;
+                diminuiuAltura = true;
                 break;
 
-                case 0:
-                a->FB=1;
-                diminuiuAltura= false;
+            case 0:
+                a->FB = 1;
+                diminuiuAltura = false;
                 break;
 
-                case 1:
-                a= balancearEsq(a, diminuiuAltura);
+            case 1:
+                a = balancearEsq(a, diminuiuAltura);
                 break;
             }
         }
     }
-    else{
-        if(a->esq==nullptr || a->dir==nullptr){
-            NoArvorePosts *temp =  a;
-            if(a->esq== nullptr){
-                a= a->esq;
-            }else{
-                a= a->dir;
+    else
+    {
+        if (a->esq == nullptr || a->dir == nullptr)
+        {
+            NoArvorePosts *temp = a;
+            if (a->esq == nullptr)
+            {
+                a = a->esq;
             }
-            if(temp->publicacao!=nullptr){
+            else
+            {
+                a = a->dir;
+            }
+            if (temp->publicacao != nullptr)
+            {
                 liberarLikes(temp->publicacao->usersLike);
                 liberarComentario(temp->publicacao->comentarios);
                 delete temp->publicacao;
             }
             delete temp;
-            diminuiuAltura=true;
+            diminuiuAltura = true;
         }
-        else{
-            NoArvorePosts *maiorEsq=nullptr;
-            a->esq= extrairMaiorPost(a->esq, maiorEsq, diminuiuAltura);
-            
-            Publicacao* p= a->publicacao;
-            a->publicacao= maiorEsq->publicacao;
-            maiorEsq->publicacao= p;
+        else
+        {
+            NoArvorePosts *maiorEsq = nullptr;
+            a->esq = extrairMaiorPost(a->esq, maiorEsq, diminuiuAltura);
 
-            if(maiorEsq->publicacao!=nullptr){
+            Publicacao *p = a->publicacao;
+            a->publicacao = maiorEsq->publicacao;
+            maiorEsq->publicacao = p;
+
+            if (maiorEsq->publicacao != nullptr)
+            {
                 liberarLikes(maiorEsq->publicacao->usersLike);
                 liberarComentario(maiorEsq->publicacao->comentarios);
                 delete maiorEsq->publicacao;
             }
             delete maiorEsq;
 
-            if(diminuiuAltura){
-                switch(a->FB){
+            if (diminuiuAltura)
+            {
+                switch (a->FB)
+                {
                 case -1:
-                a->FB= 0;
-                diminuiuAltura=true;
-                break;
+                    a->FB = 0;
+                    diminuiuAltura = true;
+                    break;
 
                 case 0:
-                a->FB=1;
-                diminuiuAltura= false;
-                break;
+                    a->FB = 1;
+                    diminuiuAltura = false;
+                    break;
 
                 case 1:
-                a= balancearDir(a, diminuiuAltura);
-                break;
+                    a = balancearDir(a, diminuiuAltura);
+                    break;
                 }
             }
         }
     }
     return a;
 }
-
 
 // Funções de arvore de publicação encerram aqui ---------------------------------------------------------------------
 
@@ -987,9 +1056,9 @@ bool insereLista(NoLista *&inicio, usuario *n)
 void liberarMiniRede(MiniRede &rede)
 {
     liberarArvorePosts(rede.raizArvorePosts);
-    rede.raizArvorePosts=nullptr;
+    rede.raizArvorePosts = nullptr;
     liberarArvoreUser(rede.raizArvore);
-    rede.raizArvore=nullptr;
+    rede.raizArvore = nullptr;
     liberarHash(rede.tabelaHash, TAM_HASH);
     liberarPilha(rede.pilhaPosts);
     liberarTimeLine(rede.timeLineGlobal);
@@ -1154,8 +1223,8 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
             noListPosts *no = new noListPosts;
             no->publicacao = publicacao;
             no->prox = nullptr;
-            
-            //add na pilha de posts
+
+            // add na pilha de posts
             push(rede.pilhaPosts, publicacao);
 
             if (auxUser->publicacoes == nullptr || publicacao->timestamp > auxUser->publicacoes->publicacao->timestamp)
@@ -1185,43 +1254,52 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
     }
 }
 
-void deletaPost(MiniRede &rede, int idPost, int idAutor, std::ostream &saida){
+void deletaPost(MiniRede &rede, int idPost, int idAutor, std::ostream &saida)
+{
     usuario *aux = buscarArvore(rede.raizArvore, idAutor);
-    if(aux==nullptr){
+    if (aux == nullptr)
+    {
         saida << "ERROR USER_NOT_FOUND\n";
         return;
     }
 
-    Publicacao *post= buscarArvorePost(rede.raizArvorePosts, idPost);
-    if(post == nullptr){
+    Publicacao *post = buscarArvorePost(rede.raizArvorePosts, idPost);
+    if (post == nullptr)
+    {
         saida << "ERROR POST_NOT_FOUND\n";
         return;
     }
 
-    if(post->idAutor != idAutor){
+    if (post->idAutor != idAutor)
+    {
         saida << "ERROR POST_NOT_FROM_THIS_USER\n";
         return;
     }
 
-    noListPosts *atual= aux->publicacoes;
+    noListPosts *atual = aux->publicacoes;
     noListPosts *ant = nullptr;
 
-    while(atual!= nullptr && atual->publicacao->id !=idPost){
+    while (atual != nullptr && atual->publicacao->id != idPost)
+    {
         ant = atual;
         atual = atual->prox;
     }
-    if(atual!= nullptr){
-        if(ant== nullptr){
-            aux->publicacoes= atual->prox;
-        }else{
+    if (atual != nullptr)
+    {
+        if (ant == nullptr)
+        {
+            aux->publicacoes = atual->prox;
+        }
+        else
+        {
             ant->prox = atual->prox;
         }
         delete atual;
     }
-    bool diminuiuAltura= false;
+    bool diminuiuAltura = false;
     RemoverDeque(rede.timeLineGlobal, idPost);
     removerDaPilha(rede.pilhaPosts, idPost);
-    rede.raizArvorePosts= removeAVLPost(rede.raizArvorePosts, idPost, diminuiuAltura);
+    rede.raizArvorePosts = removeAVLPost(rede.raizArvorePosts, idPost, diminuiuAltura);
 
     saida << "POST_DELETED\n";
 }
@@ -1351,7 +1429,7 @@ void consultarNotificacoes(MiniRede &rede, int idUsuario, int k, std::ostream &s
 void gerarFeed(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
 {
     usuario *user = buscarArvore(rede.raizArvore, idUsuario);
-    if(user== nullptr)
+    if (user == nullptr)
     {
         saida << "ERROR USER_NOT_FOUND\n";
         return;
@@ -1360,35 +1438,37 @@ void gerarFeed(MiniRede &rede, int idUsuario, int k, std::ostream &saida)
     NoRanking *Feed = nullptr;
 
     NoLista *atual = user->seguindo;
-    while(atual!=nullptr){
-        noListPosts *post =atual->user->publicacoes;
+    while (atual != nullptr)
+    {
+        noListPosts *post = atual->user->publicacoes;
 
-        while(post!=nullptr){
+        while (post != nullptr)
+        {
             NoRanking *novo = new NoRanking;
-            novo->post= post->publicacao;
-            novo->prox= Feed;
+            novo->post = post->publicacao;
+            novo->prox = Feed;
             Feed = novo;
-            post=post->prox;
+            post = post->prox;
         }
-        atual= atual->prox;
+        atual = atual->prox;
     }
 
     mergeSortFeed(Feed);
 
     saida << "FEED_BEGIN\n";
     NoRanking *atualPost = Feed;
-    while(atualPost != nullptr && k>0){
-        saida << "POST " << atualPost->post->id << " " << atualPost->post->idAutor << " " << atualPost->post->timestamp << " " << 
-        atualPost->post->curtidas << " " << atualPost->post->texto << "\n";
+    while (atualPost != nullptr && k > 0)
+    {
+        saida << "POST " << atualPost->post->id << " " << atualPost->post->idAutor << " " << atualPost->post->timestamp << " " << atualPost->post->curtidas << " " << atualPost->post->texto << "\n";
 
-        atualPost=atualPost->prox;
+        atualPost = atualPost->prox;
         k--;
     }
 
     saida << "FEED_END\n";
-    //limpeza
+    // limpeza
     NoRanking *atualLimpeza = Feed;
-    while(atualLimpeza!= nullptr)
+    while (atualLimpeza != nullptr)
     {
         NoRanking *aux = atualLimpeza;
         atualLimpeza = atualLimpeza->prox;
@@ -1424,19 +1504,22 @@ void listarTopPosts(MiniRede &rede, int k, std::ostream &saida)
     }
 }
 
-void piilhaPostsRecentes(Pilha &pilha, int k, std::ostream &saida){
-    if( pilha.topo == nullptr){
+void piilhaPostsRecentes(Pilha &pilha, int k, std::ostream &saida)
+{
+    if (pilha.topo == nullptr)
+    {
         saida << "ERROR NO_NEW_POSTS\n";
         return;
     }
 
     saida << "RECENT_POSTS_BEGIN\n";
-    
-    while(pilha.topo!= nullptr && k>0){
+
+    while (pilha.topo != nullptr && k > 0)
+    {
         NoPilhaPub *atual = pilha.topo;
         saida << "POST " << atual->p->id << " " << atual->p->idAutor << " " << atual->p->timestamp << " "
               << atual->p->curtidas << " " << atual->p->texto << "\n";
-        
+
         pilha.topo = pilha.topo->prox;
         delete atual;
         k--;
@@ -1444,18 +1527,69 @@ void piilhaPostsRecentes(Pilha &pilha, int k, std::ostream &saida){
     saida << "RECENT_POSTS_END\n";
 }
 
-void gerarTimeLine(TimeLine &deque, int k, std::ostream &saida){
+void gerarTimeLine(TimeLine &deque, int k, std::ostream &saida)
+{
     saida << "TIMELINE_BEGIN\n";
-    NoDeque *atual= deque.inicio;
+    NoDeque *atual = deque.inicio;
 
-    while(atual!=nullptr && k>0){
+    while (atual != nullptr && k > 0)
+    {
         saida << "POST " << atual->post->id << " " << atual->post->idAutor << " " << atual->post->timestamp << " "
               << atual->post->curtidas << " " << atual->post->texto << "\n";
-        
-        atual=atual->prox;
+
+        atual = atual->prox;
         k--;
     }
     saida << "TIMELINE_END\n";
+}
+
+void deixarDeSeguir(MiniRede &rede, int idSeguidor, int idSeguido, std::ostream &saida)
+{
+    if (idSeguido == idSeguidor)
+    {
+        saida << "ERROR CANNOT_FOLLOW_SELF\n";
+        return;
+    }
+    usuario *a = buscarArvore(rede.raizArvore, idSeguidor);
+    usuario *b = buscarArvore(rede.raizArvore, idSeguido);
+
+    if (a == nullptr || b == nullptr)
+    {
+        saida << "ERROR USER_NOT_FOUND\n";
+        return;
+    }
+
+    NoLista *aux = a->seguindo;
+    NoLista *auxUserAnt = nullptr;
+
+    while (aux != nullptr && aux->user->id != idSeguido)
+    {
+        auxUserAnt = aux;
+        aux = aux->prox;
+    }
+
+    if (aux == nullptr)
+    {
+
+        saida << "ERROR NOT_FOLLOWING\n";
+        return;
+    }
+
+    else
+    {
+        if (auxUserAnt != nullptr)
+        {
+            auxUserAnt->prox = aux->prox;
+            delete (aux);
+            saida << "UNFOLLOWED " << idSeguido << "\n";
+        }
+        else
+        {
+            a->seguindo = aux->prox;
+            delete (aux);
+            saida << "UNFOLLOWED " << idSeguido << "\n";
+        }
+    }
 }
 
 void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &saida)
@@ -1550,7 +1684,7 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             adicionarComentarios(idUsuario, idPost, comentario.c_str(), rede, saida);
         }
 
-        else if(comando == "FEED")
+        else if (comando == "FEED")
         {
             int idUser;
             int k;
@@ -1558,25 +1692,37 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             gerarFeed(rede, idUser, k, saida);
         }
 
-        else if(comando == "DELETE_POST"){
+        else if (comando == "DELETE_POST")
+        {
             int idPost, idAutor;
             entrada >> idPost >> idAutor;
             deletaPost(rede, idPost, idAutor, saida);
         }
 
-        else if(comando == "RECENT_POSTS"){
+        else if (comando == "RECENT_POSTS")
+        {
             int k;
             entrada >> k;
-            piilhaPostsRecentes(rede.pilhaPosts, k,saida);
+            piilhaPostsRecentes(rede.pilhaPosts, k, saida);
         }
 
-        else if(comando == "TIMELINE"){
+        else if (comando == "TIMELINE")
+        {
             int k;
             entrada >> k;
             gerarTimeLine(rede.timeLineGlobal, k, saida);
         }
 
-        else{
+        else if (comando == "UNFOLLOW")
+        {
+            int idSeguidor;
+            int idSeguido;
+            entrada >> idSeguidor >> idSeguido;
+            deixarDeSeguir(rede, idSeguidor, idSeguido, saida);
+        }
+
+        else
+        {
             saida << "ERROR INVALID_COMMAND\n";
             string ignore;
             getline(entrada, ignore);
