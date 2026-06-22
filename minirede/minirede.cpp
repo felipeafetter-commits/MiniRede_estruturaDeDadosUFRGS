@@ -3,6 +3,45 @@
 #include <string>
 
 using namespace std;
+//funcoes deque
+void InserirInicio(TimeLine &deque, Publicacao *post){
+    NoDeque *novo = new NoDeque;
+    novo->post = post;
+    novo->prox = deque.inicio;
+    novo->ant=nullptr;
+
+    if(deque.inicio!= nullptr){
+        deque.inicio->ant=novo;
+    }else{
+        deque.fim= novo;
+    }
+    deque.inicio=novo;
+}
+
+void RemoverDeque(TimeLine &deque, int idPost){
+    NoDeque *atual = deque.inicio;
+
+    while(atual !=nullptr &&atual->post->id !=idPost){
+        atual = atual->prox;
+    }
+
+    if(atual !=nullptr){
+        if(atual->ant!=nullptr){
+            atual->ant->prox=atual->prox;
+        }else{
+            deque.inicio= atual->prox;
+        }
+
+        if(atual->prox!=nullptr){
+            atual->prox->ant= atual->ant;
+        }else{
+            deque.fim=atual->ant;
+        }
+        
+        delete atual;
+    }
+}
+
 //funcoes pilha
 void push(Pilha &pilha, Publicacao *post)
 {
@@ -11,7 +50,47 @@ void push(Pilha &pilha, Publicacao *post)
     novo->prox= pilha.topo;
     pilha.topo = novo;
 }
+
+void removerDaPilha(Pilha &pilha, int idPost) {
+    NoPilhaPub *atual = pilha.topo;
+    NoPilhaPub *ant = nullptr;
+
+    while (atual != nullptr && atual->p->id != idPost) {
+        ant = atual;
+        atual = atual->prox;
+    }
+    if (atual != nullptr) {
+        if (ant == nullptr) {
+            pilha.topo = atual->prox; 
+        } else {
+            ant->prox = atual->prox;
+        }
+        delete atual; 
+    }
+}
+
 //funcoes para liberar os ponteiros
+void liberarPilha(Pilha &pilha) {
+    NoPilhaPub *atual = pilha.topo;
+    while (atual != nullptr) {
+        NoPilhaPub *aux = atual;
+        atual = atual->prox;
+        delete aux; 
+    }
+    pilha.topo = nullptr;
+}
+
+void liberarTimeLine(TimeLine &deque) {
+    NoDeque *atual = deque.inicio;
+    while (atual != nullptr) {
+        NoDeque *aux = atual;
+        atual = atual->prox;
+        delete aux; 
+    }
+    deque.inicio = nullptr;
+    deque.fim = nullptr;
+}
+
 void liberarLikes(NoLista *p)
 {
     while(p!=nullptr){
@@ -151,12 +230,12 @@ NoRanking *mergeFeed(NoRanking *a, NoRanking *b)
     if(a->post->timestamp> b->post->timestamp || a->post->timestamp == b->post->timestamp && a->post->id < b->post->id)
     {
         res = a;
-        res->prox = merge(a->prox, b);
+        res->prox = mergeFeed(a->prox, b);
     }
     else
     {
         res= b;
-        res->prox = merge(a, b->prox);
+        res->prox = mergeFeed(a, b->prox);
     }
     return res;
 }
@@ -277,10 +356,8 @@ void inicializarMiniRede(MiniRede &rede)
     rede.raizArvore = nullptr;
     rede.raizArvorePosts = nullptr;
     rede.pilhaPosts.topo = nullptr;
-}
-
-void inicializarPilha(Pilha &pilha){
-    pilha.topo= nullptr;
+    rede.timeLineGlobal.inicio= nullptr;
+    rede.timeLineGlobal.fim=nullptr;
 }
 
 // funcoes de arvore de usuários aqui:
@@ -735,7 +812,7 @@ NoArvorePosts *balancearEsq(NoArvorePosts *a, bool &diminuiuAltura)
     return a;
 }
 
-NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *maior, bool& diminuiuAltura){
+NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *&maior, bool& diminuiuAltura){
     if(a->dir!=nullptr){
         a->dir = extrairMaiorPost(a->dir, maior, diminuiuAltura);
         if(diminuiuAltura){
@@ -914,6 +991,8 @@ void liberarMiniRede(MiniRede &rede)
     liberarArvoreUser(rede.raizArvore);
     rede.raizArvore=nullptr;
     liberarHash(rede.tabelaHash, TAM_HASH);
+    liberarPilha(rede.pilhaPosts);
+    liberarTimeLine(rede.timeLineGlobal);
 }
 
 void cadastrarUsuario(MiniRede &rede, int id, const char username[], const char nomeCompleto[], std::ostream &saida)
@@ -982,7 +1061,7 @@ void buscarUsuarioPorUsername(MiniRede &rede, const char username[], std::ostrea
     }
     else
     {
-        saida << "USER_NOT_FOUND\n";
+        saida << "ERROR USER_NOT_FOUND\n";
     }
 }
 
@@ -1070,7 +1149,7 @@ void cadastrarPublicacao(MiniRede &rede, int idPost, int idAutor, int timestamp,
             // add na arvore de publicaçao
             bool aumentouAltura = false;
             rede.raizArvorePosts = insereAVL(rede.raizArvorePosts, publicacao, aumentouAltura);
-
+            InserirInicio(rede.timeLineGlobal, publicacao);
             // add na lista do usuário
             noListPosts *no = new noListPosts;
             no->publicacao = publicacao;
@@ -1140,7 +1219,10 @@ void deletaPost(MiniRede &rede, int idPost, int idAutor, std::ostream &saida){
         delete atual;
     }
     bool diminuiuAltura= false;
+    RemoverDeque(rede.timeLineGlobal, idPost);
+    removerDaPilha(rede.pilhaPosts, idPost);
     rede.raizArvorePosts= removeAVLPost(rede.raizArvorePosts, idPost, diminuiuAltura);
+
     saida << "POST_DELETED\n";
 }
 
@@ -1362,6 +1444,20 @@ void piilhaPostsRecentes(Pilha &pilha, int k, std::ostream &saida){
     saida << "RECENT_POSTS_END\n";
 }
 
+void gerarTimeLine(TimeLine &deque, int k, std::ostream &saida){
+    saida << "TIMELINE_BEGIN\n";
+    NoDeque *atual= deque.inicio;
+
+    while(atual!=nullptr && k>0){
+        saida << "POST " << atual->post->id << " " << atual->post->idAutor << " " << atual->post->timestamp << " "
+              << atual->post->curtidas << " " << atual->post->texto << "\n";
+        
+        atual=atual->prox;
+        k--;
+    }
+    saida << "TIMELINE_END\n";
+}
+
 void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &saida)
 {
     // TODO: ler comandos da entrada padrao ate END.
@@ -1472,6 +1568,12 @@ void processarComandos(MiniRede &rede, std::istream &entrada, std::ostream &said
             int k;
             entrada >> k;
             piilhaPostsRecentes(rede.pilhaPosts, k,saida);
+        }
+
+        else if(comando == "TIMELINE"){
+            int k;
+            entrada >> k;
+            gerarTimeLine(rede.timeLineGlobal, k, saida);
         }
 
         else{

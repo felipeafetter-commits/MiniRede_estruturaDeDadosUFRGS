@@ -25,6 +25,20 @@ struct NoRanking;
 struct noComentario;
 struct Pilha;
 struct NoPilhaPub;
+struct NoDeque;
+struct TimeLine;
+
+struct NoDeque{
+    Publicacao *post;
+    NoDeque *prox;
+    NoDeque *ant;
+};
+
+struct TimeLine{
+    NoDeque *inicio;
+    NoDeque *fim;
+    int n = 0;
+};
 
 struct Pilha{
     NoPilhaPub *topo;
@@ -116,6 +130,7 @@ struct MiniRede
     NoArvore *raizArvore;
     NoArvorePosts *raizArvorePosts;
     Pilha pilhaPosts;
+    TimeLine timeLineGlobal;
 };
 
 // Sugestao de structs que provavelmente serao necessarias:
@@ -186,12 +201,17 @@ void liberarSeguindo(NoLista *p);
 void liberarArvoreUser(NoArvore *p);
 void liberarHash(NoLista *tabela[], int tamTabela);
 NoArvorePosts *removeAVLPost(NoArvorePosts *a, int idRemover, bool &diminuiuAltura);
-NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *maior, bool& diminuiuAltura);
+NoArvorePosts *extrairMaiorPost(NoArvorePosts *a, NoArvorePosts *&maior, bool& diminuiuAltura);
 NoArvorePosts *balancearEsq(NoArvorePosts *a, bool &diminuiuAltura);
 NoArvorePosts *balancearDir(NoArvorePosts *a, bool &diminuiuAltura);
 void deletaPost(MiniRede &rede, int idPost, int idAutor, std::ostream &saida);
 void push(Pilha &pilha, Publicacao *post);
-void inicializarPilha(Pilha &pilha);
 void piilhaPostsRecentes(Pilha &pilha, int k, std::ostream &saida);
+void InserirInicio(TimeLine &deque, Publicacao *post);
+void RemoverDeque(TimeLine &deque, int idPost);
+void gerarTimeLine(TimeLine &deque, int k, std::ostream &saida);
+void liberarPilha(Pilha &pilha);
+void liberarTimeLine(TimeLine &deque);
+void removerDaPilha(Pilha &pilha, int idPost);
 
 #endif
